@@ -1,0 +1,3 @@
+- name: "Overall Equipment Effectiveness Use Case"
+  externalId: "{{ data_pipeline_oee_client_id }}"
+  description: "Dataset for the Overall Equipment Effectiveness (OEE) use case."

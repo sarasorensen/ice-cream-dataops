@@ -1,0 +1,94 @@
+workflowExternalId: wf_icapi_data_pipeline
+version: '1'
+workflowDefinition:
+  description: 'Run tasks in sequence, starting with asset hierarchy creation and ending with OEE timeseries.'
+  tasks:
+    - externalId: create_asset_hierarchy
+      type: function
+      parameters:
+        function:
+          externalId: create_asset_hierarchy
+          data:
+            dataModel:
+              space: "cdf_cdm"
+              externalId: "CogniteCore"
+              version: "v1"
+              destinationType: "CogniteAsset"
+            instanceSpace: "icapi_dm_space"
+            type: "instances"
+            ignoreNullFields: true
+            isPublic: true
+            conflictMode: "upsert"
+      retries: 3
+      timeout: 3600
+      onFailure: abortWorkflow
+      authentication:
+        clientId: {{ icapi_extractors_client_id }}
+        clientSecret: {{ icapi_extractors_client_secret }}
+        tokenUri: {{ IDP_TOKEN_URL }}
+        cdfProjectName: {{ CDF_PROJECT }}
+        scopes: {{ IDP_SCOPES }}
+
+    - externalId: icapi_datapoints_extractor
+      type: function
+      parameters:
+        function:
+          externalId: icapi_datapoints_extractor
+          data:
+            hours: 1
+      retries: 3
+      timeout: 3600
+      onFailure: abortWorkflow
+      authentication:
+        clientId: {{ icapi_extractors_client_id }}
+        clientSecret: {{ icapi_extractors_client_secret }}
+        tokenUri: {{ IDP_TOKEN_URL }}
+        cdfProjectName: {{ CDF_PROJECT }}
+        scopes: {{ IDP_SCOPES }}
+      dependsOn:
+        - externalId: create_asset_hierarchy  # This task depends on asset hierarchy creation
+
+    - externalId: contextualize_ts_assets
+      type: function
+      parameters:
+        function:
+          externalId: contextualize_ts_assets
+          data:
+            dataModel:
+              space: "cdf_cdm"
+              externalId: "CogniteCore"
+              version: "v1"
+              destinationType: "CogniteTimeSeries"
+            instanceSpace: ""
+            type: "instances"
+            ignoreNullFields: true
+            isPublic: true
+            conflictMode: "upsert"
+      retries: 3
+      timeout: 3600
+      onFailure: abortWorkflow
+      authentication:
+        clientId: {{ icapi_extractors_client_id }}
+        clientSecret: {{ icapi_extractors_client_secret }}
+        tokenUri: {{ IDP_TOKEN_URL }}
+        cdfProjectName: {{ CDF_PROJECT }}
+        scopes: {{ IDP_SCOPES }}
+      dependsOn:
+        - externalId: icapi_datapoints_extractor  # This task depends on the datapoints extractor
+
+    - externalId: oee_timeseries
+      type: function
+      parameters:
+        function:
+          externalId: oee_timeseries
+          data:
+            sites: "All" 
+            lookback_minutes: 60 
+      retries: 3
+      timeout: 3600
+      onFailure: abortWorkflow
+      dependsOn:
+        - externalId: contextualize_ts_assets  # This task depends on contextualizing the timeseries assets
+      authentication:
+        clientId: {{ data_pipeline_oee_client_id }}
+        clientSecret: {{ data_pipeline_oee_client_secret }}
