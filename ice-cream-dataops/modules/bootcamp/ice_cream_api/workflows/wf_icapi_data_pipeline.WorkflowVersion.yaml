@@ -46,7 +46,7 @@ workflowDefinition:
         cdfProjectName: {{ CDF_PROJECT }}
         scopes: {{ IDP_SCOPES }}
       dependsOn:
-        - externalId: create_asset_hierarchy  # This task depends on asset hierarchy creation
+        - externalId: create_asset_hierarchy 
 
     - externalId: contextualize_ts_assets
       type: function
@@ -74,7 +74,7 @@ workflowDefinition:
         cdfProjectName: {{ CDF_PROJECT }}
         scopes: {{ IDP_SCOPES }}
       dependsOn:
-        - externalId: icapi_datapoints_extractor  # This task depends on the datapoints extractor
+        - externalId: icapi_datapoints_extractor 
 
     - externalId: oee_timeseries
       type: function
@@ -88,7 +88,7 @@ workflowDefinition:
       timeout: 3600
       onFailure: abortWorkflow
       dependsOn:
-        - externalId: contextualize_ts_assets  # This task depends on contextualizing the timeseries assets
+        - externalId: contextualize_ts_assets
       authentication:
         clientId: {{ data_pipeline_oee_client_id }}
         clientSecret: {{ data_pipeline_oee_client_secret }}
